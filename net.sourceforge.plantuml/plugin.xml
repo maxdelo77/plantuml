@@ -80,6 +80,7 @@
 
    <extension
          point="net.sourceforge.plantuml.eclipse.diagramTextProvider">
+      
       <diagramTextProvider
             fileExtensions="*"
             providerClass="net.sourceforge.plantuml.eclipse.utils.TextEditorDiagramTextProvider">
@@ -87,8 +88,13 @@
       
       <diagramTextProvider
             fileExtensions="java"
-            providerClass="net.sourceforge.plantuml.eclipse.utils.JavaEditorDiagramTextProvider">
+            providerClass="net.sourceforge.plantuml.eclipse.utils.JavaSourceEditorDiagramTextProvider">
       </diagramTextProvider>
+      
+      <diagramTextProvider
+            fileExtensions="class"
+            providerClass="net.sourceforge.plantuml.eclipse.utils.JavaClassEditorDiagramTextProvider">
+      </diagramTextProvider>      
    </extension>
 
 </plugin>

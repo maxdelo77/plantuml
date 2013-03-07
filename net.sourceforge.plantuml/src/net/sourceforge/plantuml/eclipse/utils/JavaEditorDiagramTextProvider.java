@@ -3,9 +3,6 @@ package net.sourceforge.plantuml.eclipse.utils;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
@@ -13,59 +10,59 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
 
-public class JavaEditorDiagramTextProvider extends AbstractDiagramTextProvider {
+public abstract class JavaEditorDiagramTextProvider extends AbstractDiagramTextProvider {
 
 	public JavaEditorDiagramTextProvider() {
 		setEditorType(ITextEditor.class);
 	}
 
-	private class Context {
+	public class Context {
 		IEditorPart editorPart;
 		IEditorInput editorInput;
-		IProject project;
-		IJavaProject javaProject;
-		ICompilationUnit compUnit;
+		private IProject project;
+		private IJavaProject javaProject;
+		private ICompilationUnit compUnit;
+		
+		public Context() {}
+
+		public IProject getProject() {
+			return project;
+		}
+
+		public void setProject(IProject project) {
+			this.project = project;
+		}
+
+		public IJavaProject getJavaProject() {
+			return javaProject;
+		}
+
+		public void setJavaProject(IJavaProject javaProject) {
+			this.javaProject = javaProject;
+		}
+
+		public ICompilationUnit getCompUnit() {
+			return compUnit;
+		}
+
+		public void setCompUnit(ICompilationUnit compUnit) {
+			this.compUnit = compUnit;
+		}
 	}
 	
-	private Context currentContext = null;
+	protected Context currentContext = null;
 	
-	@Override
-	protected String getDiagramText(IEditorPart editorPart, IEditorInput editorInput) {
-		if (! (editorInput instanceof IFileEditorInput)) {
-			return null;
-		}
-		currentContext = new Context();
-		IPath path = ((IFileEditorInput) editorInput).getFile().getFullPath();
-		currentContext.project = ResourcesPlugin.getWorkspace().getRoot().getProject(path.segment(0));
-		currentContext.javaProject = JavaCore.create(currentContext.project);
-		currentContext.compUnit = JavaCore.createCompilationUnitFrom(currentContext.project.getFile(path.removeFirstSegments(1)));
-		StringBuilder result = new StringBuilder();
-		try {
-			currentContext.compUnit.open(new NullProgressMonitor());
-			for (IType type: currentContext.compUnit.getTypes()) {
-				generateForType(type, result, GEN_MEMBERS | GEN_MODIFIERS | GEN_SUPERCLASS | GEN_INTERFACES, null);
-			}
-		} catch (JavaModelException e) {
-			System.err.println(e);
-		} finally {
-			currentContext = null;
-		}
-		return (result.length() > 0 ? result.toString() : null);
-	}
-
-	private static int GEN_MODIFIERS = 1<<0, GEN_MEMBERS = 1<<1, GEN_SUPERCLASS = 1<<2, GEN_INTERFACES = 1<<3, GEN_ASSOCIATIONS = 1<<4;
+	protected static int GEN_MODIFIERS = 1<<0, GEN_MEMBERS = 1<<1, GEN_SUPERCLASS = 1<<2, GEN_INTERFACES = 1<<3, GEN_ASSOCIATIONS = 1<<4;
 	
-	private static String ASSOCIATION_RELATION = "-->", SUPERCLASS_RELATION = "<|--", SUPERTYPE_RELATION = "<|..";
+	protected static String ASSOCIATION_RELATION = "-->", SUPERCLASS_RELATION = "<|--", SUPERTYPE_RELATION = "<|..";
 
-	private void generateForType(IType type, StringBuilder result, int genFlags, List<IType> allTypes) {
+	protected void generateForType(IType type, StringBuilder result, int genFlags, List<IType> allTypes) {
 		result.append(getClassType(type));
 		result.append(" ");
 		appendNameDeclaration(type.getElementName(), result);
@@ -243,7 +240,7 @@ public class JavaEditorDiagramTextProvider extends AbstractDiagramTextProvider {
 	
 	private String getClassType(String signature, IType relativeTo, String def) {
 		IType type = null;
-		if (currentContext != null && currentContext.javaProject != null) {
+		if (currentContext != null && currentContext.getJavaProject() != null) {
 			String typeName = Signature.toString(signature);
 			if (typeName.lastIndexOf('.') < 0) {
 				try {
@@ -255,7 +252,7 @@ public class JavaEditorDiagramTextProvider extends AbstractDiagramTextProvider {
 				}
 			}
 			try {
-				type = currentContext.javaProject.findType(typeName);
+				type = currentContext.getJavaProject().findType(typeName);
 			} catch (JavaModelException e) {
 			} catch (IllegalArgumentException e) {
 			}
